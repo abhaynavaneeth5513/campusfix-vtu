@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}CampusFix · Report a campus issue{% endblock %}
+{% block content %}
+<section class="hero card border-0 mb-4">
+  <div class="card-body p-4 p-lg-5">
+    <p class="eyebrow mb-2">Student complaint desk</p>
+    <h1 class="display-6 fw-semibold mb-3">Report it. Track it. Get it fixed.</h1>
+    <p class="lead text-secondary mb-4">Submit a campus issue and follow it here. Administrators move each complaint from Pending to In Progress and then to Resolved.</p>
+    <a class="btn btn-primary btn-lg" href="#report">Submit a complaint</a>
+  </div>
+</section>
+
+<section class="row g-3 mb-4" aria-label="Complaint totals">
+  <div class="col-6 col-lg-3">
+    <article class="card stat-card stat-total h-100">
+      <div class="card-body">
+        <p class="stat-label mb-1">All complaints</p>
+        <p class="stat-value mb-0" id="stat-total">{{ stats.total }}</p>
+      </div>
+    </article>
+  </div>
+  <div class="col-6 col-lg-3">
+    <article class="card stat-card stat-pending h-100">
+      <div class="card-body">
+        <p class="stat-label mb-1">Pending</p>
+        <p class="stat-value mb-0" id="stat-pending">{{ stats.Pending }}</p>
+      </div>
+    </article>
+  </div>
+  <div class="col-6 col-lg-3">
+    <article class="card stat-card stat-progress h-100">
+      <div class="card-body">
+        <p class="stat-label mb-1">In progress</p>
+        <p class="stat-value mb-0" id="stat-progress">{{ stats['In Progress'] }}</p>
+      </div>
+    </article>
+  </div>
+  <div class="col-6 col-lg-3">
+    <article class="card stat-card stat-resolved h-100">
+      <div class="card-body">
+        <p class="stat-label mb-1">Resolved</p>
+        <p class="stat-value mb-0" id="stat-resolved">{{ stats.Resolved }}</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-5" id="report">
+    <section class="card border-0 h-100">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-1">Submit a complaint</h2>
+        <p class="text-secondary mb-4">Title, description, and category are required. New complaints start as Pending.</p>
+        <form method="post" action="{{ url_for('submit_complaint') }}" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="mb-3">
+            <label class="form-label" for="title">Title</label>
+            <input class="form-control" id="title" name="title" maxlength="120" required value="{{ form.title }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="5" maxlength="2000" required>{{ form.description }}</textarea>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="category">Category</label>
+            <select class="form-select" id="category" name="category" required>
+              <option value="" {% if not form.category %}selected{% endif %}>Select a category</option>
+              {% for category in categories %}
+              <option value="{{ category }}" {% if form.category == category %}selected{% endif %}>{{ category }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Submit complaint</button>
+        </form>
+      </div>
+    </section>
+  </div>
+  <div class="col-lg-7">
+    <section class="card border-0 h-100">
+      <div class="card-body p-4">
+        <h2 class="h4 mb-3">How a complaint moves</h2>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="step-card h-100">
+              <span class="status-badge badge-pending">Pending</span>
+              <p class="mb-0 mt-3">A student report is saved and waiting for an administrator.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="step-card h-100">
+              <span class="status-badge badge-progress">In Progress</span>
+              <p class="mb-0 mt-3">Campus staff have picked up the issue and work is underway.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="step-card h-100">
+              <span class="status-badge badge-resolved">Resolved</span>
+              <p class="mb-0 mt-3">The problem is fixed and the complaint stays on record.</p>
+            </div>
+          </div>
+        </div>
+        <ul class="category-list mt-4 mb-0">
+          {% for category in categories %}
+          <li>{{ category }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card border-0" id="dashboard">
+  <div class="card-body p-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+      <div>
+        <h2 class="h4 mb-1">Complaint dashboard</h2>
+        <p class="text-secondary mb-0">Every saved complaint. Filter by category or status.</p>
+      </div>
+      <form class="row g-2 align-items-end filter-form" method="get" action="{{ url_for('index') }}#dashboard">
+        <div class="col-sm-5">
+          <label class="form-label" for="filter-category">Category</label>
+          <select class="form-select" id="filter-category" name="category">
+            <option value="">All categories</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label" for="filter-status">Status</label>
+          <select class="form-select" id="filter-status" name="status">
+            <option value="">All statuses</option>
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-3 d-grid">
+          <button class="btn btn-outline-primary" type="submit">Apply</button>
+        </div>
+      </form>
+    </div>
+    {% if complaints %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <caption class="visually-hidden">All submitted complaints</caption>
+        <thead>
+          <tr>
+            <th scope="col">Ref</th>
+            <th scope="col">Complaint</th>
+            <th scope="col">Category</th>
+            <th scope="col">Status</th>
+            <th scope="col">Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for complaint in complaints %}
+          <tr>
+            <td class="fw-semibold text-nowrap">CF-{{ "%03d"|format(complaint.id) }}</td>
+            <td>
+              <div class="fw-semibold">{{ complaint.title }}</div>
+              <div class="complaint-desc">{{ complaint.description }}</div>
+            </td>
+            <td>{{ complaint.category }}</td>
+            <td>
+              {% if complaint.status == 'Pending' %}
+              <span class="status-badge badge-pending">Pending</span>
+              {% elif complaint.status == 'In Progress' %}
+              <span class="status-badge badge-progress">In Progress</span>
+              {% else %}
+              <span class="status-badge badge-resolved">Resolved</span>
+              {% endif %}
+            </td>
+            <td class="text-nowrap">{{ complaint.updated_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% elif selected_category or selected_status %}
+    <p class="empty-state mb-0">No complaints match this filter.</p>
+    {% else %}
+    <p class="empty-state mb-0">No complaints have been submitted yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
